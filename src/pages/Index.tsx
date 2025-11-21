@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VehicleLookupForm } from "@/components/VehicleLookupForm";
 import { VehicleResults } from "@/components/VehicleResults";
-import { Car } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -39,11 +38,20 @@ export interface VehicleData {
 const Index = () => {
   const [vehicleData, setVehicleData] = useState<VehicleData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleLookup = async (data: VehicleData) => {
     setIsLoading(true);
     setVehicleData(null);
-    
+
     try {
       const { data: result, error } = await supabase.functions.invoke('vehicle-lookup', {
         body: {
@@ -65,8 +73,8 @@ const Index = () => {
       }
 
       setVehicleData(result);
-      toast.success('Vehicle data retrieved successfully!');
-      
+      toast.success('Vehicle data retrieved successfully');
+
     } catch (error) {
       console.error('Lookup error:', error);
       toast.error('Failed to lookup vehicle. Please try again.');
@@ -76,39 +84,66 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary to-accent">
-              <Car className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Vehicle Lookup</h1>
-              <p className="text-sm text-muted-foreground">Decode VIN or search by license plate</p>
+    <div className="min-h-screen bg-background">
+      {/* Apple-style Sticky Navbar */}
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-background/80 apple-blur-bg shadow-sm'
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="max-w-[980px] mx-auto px-6">
+          <div className="h-[44px] flex items-center justify-between">
+            <div className="text-[21px] font-semibold tracking-tight">
+              Vehicle Intelligence
             </div>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Lookup Form */}
-          <VehicleLookupForm onLookup={handleLookup} isLoading={isLoading} />
-
-          {/* Results */}
-          {vehicleData && <VehicleResults data={vehicleData} />}
+      {/* Hero Section */}
+      <section className="relative pt-[88px] pb-[80px] px-6 overflow-hidden">
+        <div className="max-w-[980px] mx-auto text-center">
+          <div className="opacity-0 animate-fade-in-up">
+            <h1 className="apple-text-hero mb-4">
+              Vehicle Intelligence,<br />Reimagined.
+            </h1>
+          </div>
+          <div className="opacity-0 animate-fade-in-up delay-200">
+            <p className="apple-text-subheadline text-muted-foreground max-w-[600px] mx-auto">
+              Decode any VIN or lookup license plates with precision and speed.
+            </p>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Form Section */}
+      <section className="pb-20 px-6">
+        <div className="max-w-[692px] mx-auto opacity-0 animate-fade-in-up delay-300">
+          <VehicleLookupForm onLookup={handleLookup} isLoading={isLoading} />
+        </div>
+      </section>
+
+      {/* Results Section */}
+      {vehicleData && (
+        <section className="pb-32 px-6">
+          <div className="max-w-[1200px] mx-auto">
+            <VehicleResults data={vehicleData} />
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
-      <footer className="border-t border-border/50 bg-card/30 backdrop-blur-sm mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-sm text-muted-foreground">
-            <p>Vehicle data provided by NHTSA vPIC API</p>
-            <p className="mt-2">For demonstration purposes only</p>
+      <footer className="border-t border-border/50 py-8 px-6">
+        <div className="max-w-[980px] mx-auto">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Vehicle data provided by NHTSA vPIC API
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              For demonstration purposes only
+            </p>
           </div>
         </div>
       </footer>

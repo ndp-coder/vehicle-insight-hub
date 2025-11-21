@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { VehicleData } from "@/pages/Index";
 
@@ -23,6 +21,7 @@ const US_STATES = [
 ];
 
 export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProps) => {
+  const [mode, setMode] = useState<"vin" | "plate">("vin");
   const [vin, setVin] = useState("");
   const [plate, setPlate] = useState("");
   const [state, setState] = useState("");
@@ -33,7 +32,6 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
       toast.error("VIN must be exactly 17 characters");
       return false;
     }
-    // Basic VIN validation (no I, O, Q characters)
     if (/[IOQ]/i.test(cleanVin)) {
       toast.error("VIN cannot contain the letters I, O, or Q");
       return false;
@@ -49,18 +47,18 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
 
   const handlePlateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!plate.trim()) {
       toast.error("Please enter a license plate number");
       return;
     }
-    
+
     if (!state) {
       toast.error("Please select a state");
       return;
     }
 
-    onLookup({ 
+    onLookup({
       plate: {
         number: plate.trim().toUpperCase(),
         state,
@@ -70,18 +68,41 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
   };
 
   return (
-    <Card className="shadow-[var(--shadow-card)] border-border/50">
-      <Tabs defaultValue="vin" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="vin">VIN Lookup</TabsTrigger>
-          <TabsTrigger value="plate">License Plate</TabsTrigger>
-        </TabsList>
+    <div className="bg-card rounded-[28px] overflow-hidden shadow-lg border border-border/50">
+      {/* Mode Selector */}
+      <div className="bg-muted/30 p-1 m-6 rounded-full flex gap-1">
+        <button
+          type="button"
+          onClick={() => setMode("vin")}
+          className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all duration-200 ${
+            mode === "vin"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          disabled={isLoading}
+        >
+          VIN Lookup
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("plate")}
+          className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all duration-200 ${
+            mode === "plate"
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          disabled={isLoading}
+        >
+          License Plate
+        </button>
+      </div>
 
-        <TabsContent value="vin" className="p-6">
-          <form onSubmit={handleVINSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="vin" className="text-base font-semibold">
-                Vehicle Identification Number (VIN)
+      {mode === "vin" ? (
+        <form onSubmit={handleVINSubmit} className="p-6 pt-0">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="vin" className="text-base font-medium">
+                Vehicle Identification Number
               </Label>
               <Input
                 id="vin"
@@ -89,7 +110,7 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
                 value={vin}
                 onChange={(e) => setVin(e.target.value)}
                 maxLength={17}
-                className="h-12 text-lg"
+                className="h-[52px] text-lg rounded-xl border-border/50 focus:border-accent focus:ring-accent/20 transition-all"
                 disabled={isLoading}
               />
               <p className="text-sm text-muted-foreground">
@@ -97,30 +118,27 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
               </p>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-base"
+            <Button
+              type="submit"
+              className="w-full h-[52px] text-base rounded-xl bg-accent hover:bg-accent/90 transition-all duration-200 font-medium"
               disabled={isLoading || vin.length !== 17}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Decoding VIN...
+                  Decoding...
                 </>
               ) : (
-                <>
-                  <Search className="mr-2 h-5 w-5" />
-                  Decode VIN
-                </>
+                "Decode VIN"
               )}
             </Button>
-          </form>
-        </TabsContent>
-
-        <TabsContent value="plate" className="p-6">
-          <form onSubmit={handlePlateSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="plate" className="text-base font-semibold">
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handlePlateSubmit} className="p-6 pt-0">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="plate" className="text-base font-medium">
                 License Plate Number
               </Label>
               <Input
@@ -128,22 +146,22 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
                 placeholder="Enter plate number"
                 value={plate}
                 onChange={(e) => setPlate(e.target.value)}
-                className="h-12 text-lg"
+                className="h-[52px] text-lg rounded-xl border-border/50 focus:border-accent focus:ring-accent/20 transition-all"
                 disabled={isLoading}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="state" className="text-base font-semibold">
+            <div className="space-y-3">
+              <Label htmlFor="state" className="text-base font-medium">
                 State
               </Label>
               <Select value={state} onValueChange={setState} disabled={isLoading}>
-                <SelectTrigger id="state" className="h-12 text-base">
+                <SelectTrigger id="state" className="h-[52px] text-base rounded-xl border-border/50">
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {US_STATES.map((s) => (
-                    <SelectItem key={s} value={s}>
+                    <SelectItem key={s} value={s} className="rounded-lg">
                       {s}
                     </SelectItem>
                   ))}
@@ -151,26 +169,23 @@ export const VehicleLookupForm = ({ onLookup, isLoading }: VehicleLookupFormProp
               </Select>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-base"
+            <Button
+              type="submit"
+              className="w-full h-[52px] text-base rounded-xl bg-accent hover:bg-accent/90 transition-all duration-200 font-medium"
               disabled={isLoading || !plate || !state}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Looking up vehicle...
+                  Looking up...
                 </>
               ) : (
-                <>
-                  <Search className="mr-2 h-5 w-5" />
-                  Search Vehicle
-                </>
+                "Search Vehicle"
               )}
             </Button>
-          </form>
-        </TabsContent>
-      </Tabs>
-    </Card>
+          </div>
+        </form>
+      )}
+    </div>
   );
 };
