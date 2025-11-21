@@ -32,7 +32,7 @@ export interface VehicleData {
     state: string;
     expiration: string;
   };
-  [key: string]: any;
+  [key: string]: string | number | undefined | VehicleData['history'] | VehicleData['plate'];
 }
 
 const Index = () => {

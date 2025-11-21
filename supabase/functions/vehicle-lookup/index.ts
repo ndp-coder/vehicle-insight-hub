@@ -50,7 +50,7 @@ async function decodeVIN(vin: string) {
     // Transform NHTSA response to our format
     const results = data.Results || [];
     const getValue = (variableId: number) => {
-      const item = results.find((r: any) => r.VariableId === variableId);
+      const item = results.find((r: { VariableId: number; Value: string | null }) => r.VariableId === variableId);
       return item?.Value || null;
     };
 
@@ -130,7 +130,7 @@ serve(async (req) => {
     const requestData: VehicleLookupRequest = await req.json();
     console.log('Request data:', requestData);
 
-    let vehicleData: any = {};
+    let vehicleData: Record<string, unknown> = {};
     let vinToLookup: string | null = null;
 
     // Validate input
